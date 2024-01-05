@@ -22,4 +22,22 @@ final class CounterFeatureTests: XCTestCase {
             $0.count = 0
         }
     }
+
+    func testTiner() async {
+        let store = TestStore(initialState: CounterFeature.State()) {
+            CounterFeature()
+        }
+
+        await store.send(.toggleTimerButtonTapped) {
+            $0.isTimerRunning = true
+        }
+
+        await store.receive(\.timerTick, timeout: 20_000_000_000) {
+            $0.count = 1
+        }
+
+        await store.send(.toggleTimerButtonTapped) {
+            $0.isTimerRunning = false
+        }
+    }
 }
