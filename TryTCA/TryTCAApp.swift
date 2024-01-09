@@ -10,7 +10,15 @@ import ComposableArchitecture
 
 @main
 struct TryTCAApp: App {
-    static let store = Store(initialState: AppFeature.State()) {
+    static let store = Store(initialState: AppFeature.State(
+        tab3: ContactsFeature.State(
+            contacts: [
+                Contact(name: "Tester 1"),
+                Contact(name: "Tester 2"),
+                Contact(name: "Tester 3"),
+            ]
+        )
+    )) {
         AppFeature()
             ._printChanges()
     }

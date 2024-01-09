@@ -21,7 +21,6 @@ struct AddContactFeature {
 
         case delegate(Delegate)
         enum Delegate: Equatable {
-//            case cancel
             case saveContact(Contact)
         }
     }
