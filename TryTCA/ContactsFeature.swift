@@ -78,6 +78,16 @@ struct ContactsView: View {
                 }
             }
         }
+        .sheet(
+            store: store.scope(
+                state: \.$addContact,
+                action: \.addContact
+            )
+        ) { addContactStore in
+            NavigationView {
+                AddContactView(store: addContactStore)
+            }
+        }
     }
 }
 
