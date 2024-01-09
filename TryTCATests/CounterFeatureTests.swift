@@ -23,7 +23,7 @@ final class CounterFeatureTests: XCTestCase {
         }
     }
 
-    func testTiner() async {
+    func testTimer() async {
         let store = TestStore(initialState: CounterFeature.State()) {
             CounterFeature()
         }
