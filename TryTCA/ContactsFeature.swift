@@ -16,17 +16,15 @@ struct Contact: Equatable, Identifiable {
 @Reducer
 struct ContactsFeature {
     struct State: Equatable {
-        @PresentationState var addContact: AddContactFeature.State?
-        @PresentationState var alert: AlertState<Action.Alert>?
         var contacts: IdentifiedArrayOf<Contact> = []
+        @PresentationState var destination:  Destination.State?
     }
 
     enum Action {
         case addButtonTapped
-        case addContact(PresentationAction<AddContactFeature.Action>)
         case deleteButtonTapped(id: Contact.ID)
+        case destination(PresentationAction<Destination.Action>)
 
-        case alert(PresentationAction<Alert>)
         enum Alert: Equatable {
             case confirmDeletion(id: Contact.ID)
         }
@@ -36,41 +34,61 @@ struct ContactsFeature {
         Reduce { state, action in
             switch action {
             case .addButtonTapped:
-                state.addContact = AddContactFeature.State(
-                    contact: Contact(name: "")
+                state.destination = .addContact(
+                    AddContactFeature.State(
+                        contact: Contact(name: "")
+                    )
                 )
                 return .none
 
-
-            case let .addContact(.presented(.delegate(.saveContact(contact)))):
+            case  let .destination(.presented(.addContact(.delegate(.saveContact(contact))))):
                 state.contacts.append(contact)
                 return .none
 
-            case .addContact:
-                return .none
-
-            case let .deleteButtonTapped(id: id):
-                state.alert = AlertState {
-                    TextState("Sure?")
-                } actions: {
-                    ButtonState(role: .destructive, action: .confirmDeletion(id: id)) {
-                        TextState("Delete")
-                    }
-                }
-                return .none
-
-            case let .alert(.presented(.confirmDeletion(id: id))):
+            case let .destination(.presented(.alert(.confirmDeletion(id: id)))):
                 state.contacts.remove(id: id)
                 return .none
 
-            case .alert:
+            case .destination:
+                return .none
+
+            case let .deleteButtonTapped(id: id):
+                state.destination = .alert(
+                    AlertState {
+                        TextState("Sure?")
+                    } actions: {
+                        ButtonState(role: .destructive, action: .confirmDeletion(id: id)) {
+                            TextState("Delete")
+                        }
+                    }
+                )
                 return .none
             }
         }
-        .ifLet(\.$addContact, action: \.addContact) {
-            AddContactFeature()
+        .ifLet(\.$destination, action: \.destination) {
+            Destination()
         }
-        .ifLet(\.$alert, action: \.alert)
+    }
+}
+
+extension ContactsFeature {
+    @Reducer
+    struct Destination {
+        enum State: Equatable {
+            case addContact(AddContactFeature.State)
+            case alert(AlertState<ContactsFeature.Action.Alert>)
+        }
+
+        enum Action {
+            case addContact(AddContactFeature.Action)
+            case alert(ContactsFeature.Action.Alert)
+        }
+
+        var body: some ReducerOf<Self> {
+            Scope(state: \.addContact, action: \.addContact) {
+                AddContactFeature()
+            }
+        }
     }
 }
 
@@ -108,8 +126,8 @@ struct ContactsView: View {
         }
         .sheet(
             store: store.scope(
-                state: \.$addContact,
-                action: \.addContact
+                state: \.$destination.addContact,
+                action: \.destination.addContact
             )
         ) { addContactStore in
             NavigationView {
@@ -118,8 +136,8 @@ struct ContactsView: View {
         }
         .alert(
             store: store.scope(
-                state: \.$alert,
-                action: \.alert
+                state: \.$destination.alert,
+                action: \.destination.alert
             )
         )
     }
